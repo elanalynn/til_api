@@ -1,15 +1,17 @@
 require 'rails_helper'
 
-RSpec.describe 'TIL API', type: :request do
-  let!(:items) { create_list(:item, 10) }
-  let(:item_id) { items.first.id }
-
+RSpec.describe 'Item API', type: :request do
+  let(:item) { create(:item) }
+  
   describe 'GET /items' do
-    before { get '/items' }
+    before { 
+      items = create_list(:item, 10)
+      get '/items' 
+    }
 
     it 'returns items' do
-      expect(json).not_to be_empty
-      expect(json.size).to eq(10)
+      expect(body).not_to be_empty
+      expect(body.size).to eq(10)
     end
 
     it 'returns status code 200' do
@@ -18,12 +20,12 @@ RSpec.describe 'TIL API', type: :request do
   end
 
   describe 'GET /items/:id' do
-    before { get "/items/#{item_id}" }
-
     context 'when the record exists' do
+      before { get "/items/#{item.id}" }
+
       it 'returns the item' do
-        expect(json).not_to be_empty
-        expect(json['id']).to eq(item_id)
+        expect(body).not_to be_empty
+        expect(body['id']).to eq(item.id)
       end
 
       it 'returns status code 200' do
@@ -32,7 +34,7 @@ RSpec.describe 'TIL API', type: :request do
     end
 
     context 'when the record does not exist' do
-      let(:item_id) { 100 }
+      before { get "/items/12345" }
 
       it 'returns status code 404' do
         expect(response).to have_http_status(404)
@@ -45,13 +47,14 @@ RSpec.describe 'TIL API', type: :request do
   end
 
   describe 'POST /items' do
-    let(:valid_attributes) { { content: 'Request specs provide a thin wrapper around Rails\' integration tests, and are designed to drive behavior through the full stack.', date: Date.today } }
+    let(:item) { create(:item, content: 'Request specs provide a thin wrapper around Rails integration tests.') }
+    let(:valid_attributes) { { content: item.content, date: item.date, user_id: item.user_id } } 
 
     context 'when the request is valid' do
       before { post '/items', params: valid_attributes }
 
       it 'creates an item' do
-        expect(json['content']).to eq('Request specs provide a thin wrapper around Rails\' integration tests, and are designed to drive behavior through the full stack.')
+        expect(body['content']).to eq('Request specs provide a thin wrapper around Rails integration tests.')
       end
 
       it 'returns status code 201' do
@@ -60,7 +63,7 @@ RSpec.describe 'TIL API', type: :request do
     end
 
     context 'when the request is invalid' do
-      before { post '/items', params: { content: 'Invalid?' } }
+      before { post '/items', params: { content: 'abc' } }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
@@ -68,7 +71,7 @@ RSpec.describe 'TIL API', type: :request do
 
       it 'returns a validation failure message' do
         expect(response.body)
-          .to match(/Validation failed: Date can't be blank/)
+          .to match(/Validation failed: User must exist, Date can't be blank/)
       end
     end
   end
@@ -77,7 +80,7 @@ RSpec.describe 'TIL API', type: :request do
     let(:valid_attributes) { { content: 'Faker library that generates fake data.' } }
 
     context 'when the record exists' do
-      before { put "/items/#{item_id}", params: valid_attributes }
+      before { put "/items/#{item.id}", params: valid_attributes }
 
       it 'updates the record' do
         expect(response.body).to be_empty
@@ -90,7 +93,7 @@ RSpec.describe 'TIL API', type: :request do
   end
 
   describe 'DELETE /items/:id' do
-    before { delete "/items/#{item_id}" }
+    before { delete "/items/#{item.id}" }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)

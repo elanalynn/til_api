@@ -12,6 +12,7 @@ class ItemsController < ApplicationController
   end
 
   def show
+    json_response(nil, :not_found) if @item.nil?
     json_response(@item)
   end
 
@@ -28,7 +29,7 @@ class ItemsController < ApplicationController
   private
 
   def item_params
-    params.permit(:content, :date)
+    params.permit(:content, :date, :user_id)
   end
 
   def set_item
