@@ -2,12 +2,12 @@ class ItemsController < ApplicationController
   before_action :set_item, only: [:show, :update, :destroy]
 
   def index
-    @items = Item.all
+    @items = current_user.items
     json_response(@items)
   end
 
   def create
-    @item = Item.create!(item_params)
+    @item = current_user.items.create!(item_params)
     json_response(@item, :created)
   end
 
@@ -29,7 +29,7 @@ class ItemsController < ApplicationController
   private
 
   def item_params
-    params.permit(:content, :date, :user_id)
+    params.permit(:content, :date)
   end
 
   def set_item

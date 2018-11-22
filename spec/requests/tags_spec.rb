@@ -1,14 +1,16 @@
 require 'rails_helper'
 
 RSpec.describe 'Tag API' do
+  let!(:user) { create(:user) }
   let(:item) { create(:item) }
   let(:tag) { create(:tag) }
+  let(:headers) { valid_headers }
 
   describe 'GET /items/:item_id/tags' do
     context 'when item exists' do
       before {
-        tags = create_list(:tag, 11)
-        get "/items/#{item.id}/tags"
+        tags = create_list(:tag, 10)
+        get "/items/#{item.id}/tags", headers: headers
       }
 
       it 'returns status code 200' do
@@ -16,25 +18,13 @@ RSpec.describe 'Tag API' do
       end
 
       it 'returns all item tags' do
-        expect(body.size).to eq(11)
+        expect(body.size).to eq(10)
       end
-    end
-
-    context 'when item does not exist' do
-      before { get "/items/12345/tags" }
-
-      # it 'returns status code 404' do
-      #   expect(response).to have_http_status(404)
-      # end
-
-      # it 'returns a not found message' do
-      #   expect(response.body).to match(/Couldn't find Item/)
-      # end
     end
   end
 
   describe 'GET /items/:item.id/tags/:id' do
-    before { get "/items/#{item.id}/tags/#{tag.id}" }
+    before { get "/items/#{item.id}/tags/#{tag.id}", headers: headers }
 
     context 'when tag exists' do
       it 'returns status code 200' do
@@ -47,7 +37,7 @@ RSpec.describe 'Tag API' do
     end
 
     context 'when tag does not exist' do
-      before { get "/items/#{item.id}/tags/12345" }
+      before { get "/items/#{item.id}/tags/12345", headers: headers }
 
       it 'returns status code 404' do
         expect(response).to have_http_status(404)
@@ -60,11 +50,13 @@ RSpec.describe 'Tag API' do
   end
 
   describe 'POST /items/:item.id/tags' do
-    let(:tag) { create(:tag) }
-    let(:valid_attributes) { { label: tag.label, item_id: tag.item_id } }
+    let!(:tag) { create(:tag) }
+    let(:valid_attributes) do
+      { label: tag.label, item_id: tag.item_id }.to_json
+    end
 
     context 'when request attributes are valid' do
-      before { post "/items/#{item.id}/tags", params: valid_attributes }
+      before { post "/items/#{item.id}/tags", params: valid_attributes, headers: headers }
 
       it 'returns status code 201' do
         expect(response).to have_http_status(201)
@@ -72,7 +64,7 @@ RSpec.describe 'Tag API' do
     end
 
     context 'when an invalid request' do
-      before { post "/items/#{item.id}/tags", params: {} }
+      before { post "/items/#{item.id}/tags", params: {}, headers: headers }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
@@ -86,8 +78,10 @@ RSpec.describe 'Tag API' do
 
   describe 'PUT /items/:item.id/tags/:id' do
     let(:tag) { create(:tag, label: 'react') }
-    let(:valid_attributes) { { label: tag.label } }
-    before { put "/items/#{item.id}/tags/#{tag.id}", params: valid_attributes }
+    let(:valid_attributes) do
+      { label: tag.label }.to_json
+    end
+    before { put "/items/#{item.id}/tags/#{tag.id}", params: valid_attributes, headers: headers }
 
     context 'when item exists' do
       it 'returns status code 204' do
@@ -101,7 +95,7 @@ RSpec.describe 'Tag API' do
     end
 
     context 'when the item does not exist' do
-      before { put "/items/#{item.id}/tags/12345", params: valid_attributes }
+      before { put "/items/#{item.id}/tags/12345", params: valid_attributes, headers: headers }
       it 'returns status code 404' do
         expect(response).to have_http_status(404)
       end
@@ -113,7 +107,7 @@ RSpec.describe 'Tag API' do
   end
 
   describe 'DELETE /items/:id' do
-    before { delete "/items/#{item.id}/tags/#{tag.id}" }
+    before { delete "/items/#{item.id}/tags/#{tag.id}", headers: headers }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)

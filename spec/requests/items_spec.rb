@@ -1,13 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe 'Item API', type: :request do
-  let(:item) { create(:item) }
+  let(:user) { create(:user) }
+  let(:item) { create(:item, user_id: user.id) }
+  let(:headers) { valid_headers }
   
   describe 'GET /items' do
-    before { 
-      items = create_list(:item, 10)
-      get '/items' 
-    }
+    let!(:items) { create_list(:item, 10, user_id: user.id) }
+    before { get '/items', headers: headers }
 
     it 'returns items' do
       expect(body).not_to be_empty
@@ -21,7 +21,7 @@ RSpec.describe 'Item API', type: :request do
 
   describe 'GET /items/:id' do
     context 'when the record exists' do
-      before { get "/items/#{item.id}" }
+      before { get "/items/#{item.id}", headers: headers }
 
       it 'returns the item' do
         expect(body).not_to be_empty
@@ -34,7 +34,7 @@ RSpec.describe 'Item API', type: :request do
     end
 
     context 'when the record does not exist' do
-      before { get "/items/12345" }
+      before { get "/items/12345", headers: headers }
 
       it 'returns status code 404' do
         expect(response).to have_http_status(404)
@@ -48,10 +48,12 @@ RSpec.describe 'Item API', type: :request do
 
   describe 'POST /items' do
     let(:item) { create(:item, content: 'Request specs provide a thin wrapper around Rails integration tests.') }
-    let(:valid_attributes) { { content: item.content, date: item.date, user_id: item.user_id } } 
+    let(:valid_attributes) do
+       { content: item.content, date: item.date }.to_json
+    end
 
     context 'when the request is valid' do
-      before { post '/items', params: valid_attributes }
+      before { post '/items', params: valid_attributes, headers: headers }
 
       it 'creates an item' do
         expect(body['content']).to eq('Request specs provide a thin wrapper around Rails integration tests.')
@@ -63,7 +65,7 @@ RSpec.describe 'Item API', type: :request do
     end
 
     context 'when the request is invalid' do
-      before { post '/items', params: { content: 'abc' } }
+      before { post '/items', params: { content:'abc' }.to_json, headers: headers }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
@@ -71,16 +73,19 @@ RSpec.describe 'Item API', type: :request do
 
       it 'returns a validation failure message' do
         expect(response.body)
-          .to match(/Validation failed: User must exist, Date can't be blank/)
+          .to match(/Validation failed: Date can't be blank/)
       end
     end
   end
 
   describe 'PUT /items/:id' do
-    let(:valid_attributes) { { content: 'Faker library that generates fake data.' } }
+    let(:item) { create(:item, content:'Faker library that generates fake data') }
+    let(:valid_attributes) do
+      { content: item.content, date: item.date }.to_json
+    end
 
     context 'when the record exists' do
-      before { put "/items/#{item.id}", params: valid_attributes }
+      before { put "/items/#{item.id}", params: valid_attributes, headers: headers }
 
       it 'updates the record' do
         expect(response.body).to be_empty
@@ -93,7 +98,7 @@ RSpec.describe 'Item API', type: :request do
   end
 
   describe 'DELETE /items/:id' do
-    before { delete "/items/#{item.id}" }
+    before { delete "/items/#{item.id}", headers: headers }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)
