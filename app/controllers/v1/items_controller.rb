@@ -3,7 +3,7 @@ module V1
     before_action :set_item, only: [:show, :update, :destroy]
 
     def index
-      @items = User.find(params[:user_id]).items
+      @items = User.find(params[:user_id]).items.reverse
       json_response(@items)
     end
 
