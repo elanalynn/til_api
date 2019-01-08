@@ -2,7 +2,6 @@ class ApplicationController < ActionController::API
   include Response
   include ExceptionHandler
 
-  skip_before_filter :verify_authenticity_token, :only => [:update, :destroy, :create]
   before_action :authorize_request
 
   attr_reader :current_user
