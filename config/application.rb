@@ -37,8 +37,10 @@ module TilApi
 
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins 'https://todayilearned-client.herokuapp.com/'
-        resource '*', headers: :any, methods: [:get, :post, :options]
+        origins 'http://localhost:3001', 'https://todayilearned-client.herokuapp.com/'
+        resource '*',
+        headers: :any,
+        methods: [:get, :post, :put, :patch, :delete, :options, :head]
       end
     end
   end
